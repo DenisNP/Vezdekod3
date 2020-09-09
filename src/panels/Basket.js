@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { withRouter, Link } from 'react-router-dom';
 import accounting from 'accounting';
 
@@ -9,11 +9,23 @@ import './place.css';
 
 
 const Basket = ({ match: { params: { areaId, itemId }}, foodAreas, order }) => {
-  const [ faster, setFaster ] = useState(true);
-  const [ time, setTime ] = useState('');
-  const [ selfService, setSelfService ] = useState(false);
+  const getOrderData = () => {
+    return JSON.parse((localStorage.getItem('orderData') || 'null')) || {};
+  };
+
+  const orderData = getOrderData();
+
+  const [ faster, setFaster ] = useState(orderData[itemId] ? orderData[itemId].faster : true);
+  const [ time, setTime ] = useState(orderData[itemId] ? orderData[itemId].time : '');
+  const [ selfService, setSelfService ] = useState(orderData[itemId] ? orderData[itemId].selfService : false);
   const area = foodAreas.filter(area => area.id === areaId)[0];
   const item = area.items.filter(item => item.id === itemId)[0];
+
+  useEffect(() => {
+    const od = getOrderData();
+    od[itemId] = { time, faster, selfService };
+    localStorage.setItem('orderData', JSON.stringify(od));
+  }, [faster, time, selfService]);
 
   const [ price, products ] = useMemo(() => {
     const foodIds = new Set((item.foods || []).map(item => item.id));
@@ -112,6 +124,7 @@ const Basket = ({ match: { params: { areaId, itemId }}, foodAreas, order }) => {
             onToggle={() => {
               if (faster) {
                 setFaster(false);
+                setTime('10:00');
               } else {
                 setTime('');
                 setFaster(true);
@@ -140,11 +153,15 @@ const Basket = ({ match: { params: { areaId, itemId }}, foodAreas, order }) => {
         </div>
         <div className="Place__choice-item">
           <h3>С собой</h3>
-          <Checkbox checked={selfService} onToggle={() => setSelfService(!selfService)} />
+          <Checkbox checked={selfService} onToggle={() => {
+            setSelfService(!selfService);
+          }} />
         </div>
         <div className="Place__choice-item">
           <h3>На месте</h3>
-          <Checkbox checked={!selfService} onToggle={() => setSelfService(!setSelfService)} />
+          <Checkbox checked={!selfService} onToggle={() => {
+            setSelfService(!setSelfService);
+          }} />
         </div>
       </div>
       <footer className="Place__footer">
