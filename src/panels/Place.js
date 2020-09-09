@@ -8,8 +8,9 @@ import './place.css';
 
 
 const Place = ({ item, order, onIncrementPosition, onDecrementPosition, area }) => {
+  const foodIds = new Set((item.foods || []).map(item => item.id));
+
   const price = useMemo(() => {
-    const foodIds = new Set((item.foods || []).map(item => item.id));
 
     const result = Object.values(order)
       .filter((value) => {
@@ -25,6 +26,8 @@ const Place = ({ item, order, onIncrementPosition, onDecrementPosition, area }) 
 
     return accounting.formatNumber(result, 0, ' ');
   }, [ order, item ]);
+
+  const hasOrder = Object.values(order).filter((v) => foodIds.has(v.item.id)).length > 0;
 
   return (
     <div className="Place">
@@ -101,9 +104,10 @@ const Place = ({ item, order, onIncrementPosition, onDecrementPosition, area }) 
         )))}
       </ul>
       <footer className="Place__footer">
-        <Link to={`/basket/${area.id}/${item.id}`} className="Place__order">
-          Оформить заказ ({price})
-        </Link>
+          {hasOrder &&
+          <Link to={`/basket/${area.id}/${item.id}`} className="Place__order">
+            Оформить заказ ({price})
+          </Link>}
       </footer>
     </div>
   );
